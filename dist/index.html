@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>打印排版生成器</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      padding: 24px;
+      min-width: 450px;
+      background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%);
+      color: #2c3e50;
+    }
+
+    .container {
+      background-color: #fff;
+      padding: 28px;
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.05);
+    }
+
+    h4 {
+      margin-bottom: 24px;
+      font-size: 20px;
+      font-weight: 600;
+      color: #1a1a1a;
+      letter-spacing: -0.3px;
+    }
+
+    .field-group {
+      margin-bottom: 24px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #374151;
+      letter-spacing: 0.2px;
+    }
+
+    select, input[type="file"], input[type="text"] {
+      width: 100%;
+      padding: 11px 14px;
+      font-size: 14px;
+      border: 1.5px solid #e5e7eb;
+      border-radius: 10px;
+      background-color: #fafafa;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      color: #374151;
+    }
+
+    select:hover, input[type="file"]:hover, input[type="text"]:hover {
+      border-color: #d1d5db;
+      background-color: #fff;
+    }
+
+    select:focus, input[type="text"]:focus {
+      outline: none;
+      border-color: #10b981;
+      background-color: #fff;
+      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+    }
+
+    .help-text {
+      font-size: 12px;
+      color: #9ca3af;
+      margin-top: 8px;
+      line-height: 1.5;
+    }
+
+    .template-upload {
+      border: 2px dashed #d1d5db;
+      border-radius: 12px;
+      padding: 28px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      background-color: #fafafa;
+    }
+
+    .template-upload:hover {
+      border-color: #10b981;
+      background-color: #f0fdf9;
+      transform: translateY(-1px);
+    }
+
+    .template-upload.dragover {
+      border-color: #10b981;
+      background-color: #d1fae5;
+      transform: scale(1.01);
+    }
+
+    .template-upload.has-file {
+      border-color: #10b981;
+      background-color: #ecfdf5;
+    }
+
+    .template-info {
+      margin-top: 12px;
+      padding: 12px 16px;
+      background-color: #f3f4f6;
+      border-radius: 8px;
+      font-size: 13px;
+      display: none;
+      color: #4b5563;
+    }
+
+    .template-info.show {
+      display: block;
+    }
+
+    .placeholder-info {
+      margin-top: 16px;
+      padding: 16px;
+      background: linear-gradient(135deg, #fef3e7 0%, #fde8d0 100%);
+      border: 1px solid #fbbf24;
+      border-radius: 12px;
+      font-size: 13px;
+      line-height: 1.75;
+      color: #78350f;
+    }
+
+    .placeholder-info strong {
+      color: #92400e;
+      font-weight: 600;
+    }
+
+    .placeholder-info code {
+      background-color: rgba(255, 255, 255, 0.7);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 12px;
+      color: #92400e;
+      font-weight: 500;
+    }
+
+    button {
+      width: 100%;
+      padding: 14px 24px;
+      font-size: 15px;
+      font-weight: 600;
+      color: #fff;
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+      letter-spacing: 0.3px;
+    }
+
+    button:hover:not(:disabled) {
+      background: linear-gradient(135deg, #059669 0%, #047857 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+    }
+
+    button:active:not(:disabled) {
+      transform: translateY(0);
+    }
+
+    button:disabled {
+      background: linear-gradient(135deg, #d1d5db 0%, #9ca3af 100%);
+      cursor: not-allowed;
+      box-shadow: none;
+      transform: none;
+    }
+
+    #printBtn:hover:not(:disabled) {
+      background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+    }
+
+    .progress-box {
+      margin-top: 24px;
+      display: block;
+    }
+
+    .progress {
+      width: 100%;
+      height: 10px;
+      background-color: #f3f4f6;
+      border-radius: 8px;
+      overflow: hidden;
+      margin-bottom: 12px;
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+      transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      width: 0%;
+      box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+    }
+
+    .progress-text {
+      text-align: center;
+      font-size: 13px;
+      color: #6b7280;
+      font-weight: 500;
+    }
+
+    .status-box {
+      padding: 14px 18px;
+      border-radius: 10px;
+      margin-top: 20px;
+      display: none;
+      font-size: 14px;
+      line-height: 1.7;
+      white-space: pre-line;
+      font-weight: 500;
+    }
+
+    .status-success {
+      background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+      border: 1px solid #6ee7b7;
+      color: #065f46;
+    }
+
+    .status-error {
+      background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+      border: 1px solid #fca5a5;
+      color: #991b1b;
+    }
+
+    .status-info {
+      background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+      border: 1px solid #93c5fd;
+      color: #1e40af;
+    }
+
+    .record-selector {
+      margin-bottom: 24px;
+    }
+
+    .radio-group {
+      display: flex;
+      gap: 18px;
+      margin-top: 10px;
+    }
+
+    .radio-option {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      cursor: pointer;
+      padding: 8px 14px;
+      border-radius: 8px;
+      transition: all 0.2s ease;
+      color: #4b5563;
+    }
+
+    .radio-option:hover {
+      background-color: #f3f4f6;
+    }
+
+    .radio-option input[type="radio"] {
+      width: auto;
+      cursor: pointer;
+      accent-color: #10b981;
+    }
+
+    .radio-option.disabled {
+      color: #9ca3af;
+      cursor: not-allowed;
+    }
+
+    .radio-option.disabled:hover {
+      background-color: transparent;
+    }
+
+    /* 右下角交流群按钮 */
+    .feedback-float-btn {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 20px;
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: white;
+      border-radius: 30px;
+      text-decoration: none;
+      box-shadow: 0 4px 16px rgba(16, 185, 129, 0.35);
+      transition: all 0.3s ease;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .feedback-float-btn:hover {
+      background: linear-gradient(135deg, #059669 0%, #047857 100%);
+      box-shadow: 0 6px 20px rgba(16, 185, 129, 0.45);
+      transform: translateY(-2px);
+    }
+
+    .feedback-float-btn:active {
+      transform: translateY(0);
+    }
+
+    .feedback-float-btn-icon {
+      font-size: 18px;
+      line-height: 1;
+    }
+
+    .feedback-float-btn-text {
+      white-space: nowrap;
+    }
+
+    /* 登录状态样式 */
+    .login-status {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 18px;
+      background: linear-gradient(135deg, #f0fdf9 0%, #dcfce7 100%);
+      border-radius: 24px;
+      border: 1px solid rgba(16, 185, 129, 0.2);
+      font-size: 13px;
+      color: #4b5563;
+      box-shadow: 0 2px 8px rgba(16, 185, 129, 0.1);
+    }
+
+    .login-status.logout {
+      background: linear-gradient(135deg, #fef3f2 0%, #fee2e2 100%);
+      border-color: rgba(239, 68, 68, 0.2);
+    }
+
+    .login-status-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .login-status-text {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .login-status-username {
+      font-weight: 600;
+      color: #059669;
+      max-width: 100px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .radio-option input[type="radio"] {
+      width: auto;
+      cursor: pointer;
+    }
+
+    /* 打印样式 */
+    @media print {
+      /* 隐藏不需要打印的元素 */
+      .field-group:not(:has(.placeholder-info)),
+      #generateBtn,
+      .feedback-float-btn,
+      .login-status,
+      .progress-box,
+      .status-box {
+        display: none !important;
+      }
+
+      /* 只显示占位符说明 */
+      .container {
+        box-shadow: none;
+        max-width: 100%;
+        padding: 0;
+      }
+
+      .placeholder-info {
+        border: 1px solid #ddd;
+        page-break-inside: avoid;
+      }
+
+      body {
+        background: white;
+        padding: 0;
+      }
+
+      h4 {
+        margin-bottom: 16px;
+      }
+    }
+  </style>
+  <script type="module" crossorigin src="./assets/index-Bkwk61VB.js"></script>
+</head>
+<body>
+  <div class="container">
+    <!-- 登录状态 -->
+    <div id="loginStatus" class="login-status logout" style="display: none;">
+      <div class="login-status-avatar">👤</div>
+      <div class="login-status-text">
+        <span id="loginStatusNotLoggedIn">未登录</span>
+        <span id="loginStatusWelcome" style="display: none;">欢迎,</span>
+        <span id="loginStatusUsername" class="login-status-username"></span>
+      </div>
+    </div>
+
+    <h4>📄 打印排版生成器</h4>
+    <p style="font-size: 13px; color: #6b7280; margin-bottom: 20px; line-height: 1.6;">
+      将多维表格的数据，根据 Word 文档里的替换符进行批量替换并生成文档
+    </p>
+
+    <!-- 表格选择 -->
+    <div class="field-group">
+      <label>请选择表格</label>
+      <select id="tableSelect">
+        <option value="">加载中...</option>
+      </select>
+      <div class="help-text">切换表格时将自动重新加载字段配置</div>
+    </div>
+
+    <!-- 记录选择方式 -->
+    <div class="field-group record-selector">
+      <label>选择记录</label>
+      <div class="radio-group">
+        <label class="radio-option">
+          <input type="radio" name="recordMode" value="selected" checked>
+          选中的记录
+        </label>
+        <label class="radio-option">
+          <input type="radio" name="recordMode" value="all">
+          所有记录
+        </label>
+      </div>
+    </div>
+
+    <!-- 输出模式 -->
+    <div class="field-group">
+      <label>输出模式</label>
+      <div class="radio-group" style="flex-direction: column; align-items: flex-start; gap: 12px;">
+        <div style="display: flex; flex-direction: column; gap: 4px;">
+          <label class="radio-option" style="padding: 8px 14px;">
+            <input type="radio" name="outputMode" value="single" checked>
+            单文档模式（每条记录一个文档）
+          </label>
+          <div style="color: #10b981; font-size: 12px; margin-left: 34px;">
+            💡 适用场景：个人简历、证件、合同等独立文档
+          </div>
+          <div style="margin-left: 34px; margin-top: 8px;">
+            <label class="checkbox-option" style="display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer; padding: 6px 10px; border-radius: 6px; background: #f3f4f6; width: fit-content;">
+              <input type="checkbox" id="addToTable">
+              <span>📎 同时添加到表格（生成的文档作为附件添加到对应记录）</span>
+            </label>
+            <div style="margin-left: 34px; margin-top: 8px; display: none;" id="attachmentFieldConfig">
+              <input type="text" id="attachmentFieldName" placeholder="输入附件列名称" style="padding: 8px 12px; font-size: 13px; border: 1px solid #e5e7eb; border-radius: 6px; width: 200px;">
+            </div>
+          </div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 4px;">
+          <label class="radio-option" style="padding: 8px 14px;">
+            <input type="radio" name="outputMode" value="table">
+            表格模式（所有记录一个表格）
+          </label>
+          <div style="color: #10b981; font-size: 12px; margin-left: 34px;">
+            💡 适用场景：采购单、统计表、清单等汇总文档
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 表格模式配置（默认隐藏） -->
+    <div class="field-group" id="tableConfig" style="display: none;">
+      <label>并排显示</label>
+      <select id="tableColumns">
+        <option value="1">单列模式（每条记录一行）</option>
+        <option value="2" selected>双列并排（每行2条记录）</option>
+        <option value="3">三列并排（每行3条记录）</option>
+        <option value="4">四列并排（每行4条记录）</option>
+      </select>
+      <div class="help-text">
+        💡 <strong>Word表格模式：</strong>在表格中使用 <code>[序号] [字段名]</code>，程序自动添加行（此配置无效）<br>
+        💡 <strong>段落模式：</strong>在段落中使用 <code>[序号] [字段名]</code>，按此配置并排显示
+      </div>
+    </div>
+
+    <!-- 多选字段分隔符设置 -->
+    <div class="field-group">
+      <label>多选字段分隔符</label>
+      <select id="multiSelectSeparator">
+        <option value="、" selected>顿号 （A、B、C）</option>
+        <option value=",">逗号 （A, B, C）</option>
+        <option value="; ">分号 （A; B; C）</option>
+        <option value=" / ">斜杠 （A / B / C）</option>
+        <option value=" ">空格 （A B C）</option>
+        <option value="\n">换行（每个选项一行）</option>
+        <option value="custom">自定义...</option>
+      </select>
+      <input type="text" id="customSeparator" placeholder="输入自定义分隔符" style="display: none; margin-top: 8px;">
+      <div class="help-text">在模板中也可以使用高级语法：{字段|逗号} 或 {字段_1}、{字段_2}</div>
+    </div>
+
+    <!-- 输出格式选择 -->
+    <div class="field-group">
+      <label>输出格式</label>
+      <div class="radio-group">
+        <label class="radio-option">
+          <input type="radio" name="outputFormat" value="docx" checked>
+          Word 文档 (.docx)
+        </label>
+        <label class="radio-option disabled" id="pdfOptionLabel">
+          <input type="radio" name="outputFormat" value="pdf" id="pdfOption" disabled>
+          PDF 文档 (.pdf)
+        </label>
+      </div>
+    </div>
+
+    <!-- Word 模板上传 -->
+    <div class="field-group">
+      <label>Word 模板文件</label>
+      <div class="template-upload" id="templateUpload">
+        <div style="font-size: 14px; color: #666; margin-bottom: 8px;">
+          📁 点击或拖拽上传模板
+        </div>
+        <div style="font-size: 12px; color: #999;">
+          支持 .docx 格式
+        </div>
+      </div>
+      <input type="file" id="templateInput" accept=".docx" style="display: none;">
+      <div class="template-info" id="templateInfo"></div>
+    </div>
+
+    <!-- 操作按钮 -->
+    <button id="generateBtn" disabled style="width: 100%;">
+      生成打印文档
+    </button>
+
+    <!-- 进度条 -->
+    <div class="progress-box" id="progressBox">
+      <div class="progress">
+        <div class="progress-bar"></div>
+      </div>
+      <div class="progress-text" id="progressText">准备中...</div>
+    </div>
+
+    <!-- 占位符语法说明 -->
+    <div class="field-group">
+      <div class="placeholder-info">
+        <strong>💡 占位符语法：</strong><br><br>
+        <strong>基础语法：</strong><br>
+        • 单值字段：<code>{字段名}</code> 例如：<code>{姓名}</code><br>
+        • 多选字段：<code>{标签}</code> → "标签A、标签B、标签C"<br><br>
+        <strong>多选字段高级语法：</strong><br>
+        • 第一个选项：<code>{标签_1}</code> → "标签A"<br>
+        • 第二个选项：<code>{标签_2}</code> → "标签B"<br>
+        • 自定义分隔符：<code>{标签|comma}</code> → "标签A, 标签B, 标签C"<br>
+        • 分号分隔：<code>{标签|semicolon}</code> → "标签A; 标签B; 标签C"<br>
+        • 斜杠分隔：<code>{标签|slash}</code> → "标签A / 标签B / 标签C"<br>
+        • 换行分隔：<code>{标签|newline}</code> → 每个选项一行<br><br>
+        <strong>计算字段：</strong><br>
+        • 加法运算：<code>{今日+明日}</code><br>
+        • 大写金额：<code>{大写(金额)}</code><br><br>
+        <strong>🆕 自动汇总：</strong><br>
+        • 汇总求和：<code>{汇总_数量}</code> → 所有记录的数量之和<br>
+        • 汇总大写：<code>{大写_汇总_金额}</code> → 金额总和转大写<br>
+        • 两种格式都支持：<code>{汇总_数量}</code> 或 <code>{汇总:数量}</code><br>
+        • 支持所有数字类型字段（数字、货币、评分等）<br>
+        • 自动忽略非数字值<br><br>
+        <strong>🆕 表格模式（三种用法）：</strong><br><br>
+        <strong>用法1：Word表格自动扩展（推荐）</strong><br>
+        • 在Word中创建表格<br>
+        • 第一行写表头，第二行写：<code>[序号] [产品名称] [数量]</code><br>
+        • 程序自动为每条记录添加一行<br>
+        • 示例：3条数据 → 自动生成3行<br><br>
+        <strong>用法2：段落自动循环</strong><br>
+        • 在Word段落中写：<code>[序号] [产品名称] [数量]</code><br>
+        • 程序自动生成多行（根据列数配置）<br>
+        • 示例：2列配置 → 每行显示2条记录<br><br>
+        <strong>用法3：手动指定位置</strong><br>
+        • 第1条：<code>{列1_产品名称}</code> 第2条：<code>{列2_产品名称}</code><br>
+        • 完全自定义布局<br><br>
+        <strong>表格模式专用字段：</strong><br>
+        • <code>[序号]</code> - 记录序号（1, 2, 3...）<br>
+        • <code>[行号]</code> - 当前行号<br>
+        • <code>[总记录数]</code> - 总记录数<br><br>
+        <strong>提示：</strong>占位符会保留原有格式（颜色、字体等）
+      </div>
+    </div>
+
+    <!-- 状态信息 -->
+    <div class="status-box" id="statusBox"></div>
+  </div>
+
+  <!-- 右下角交流群按钮 -->
+  <a href="https://applink.feishu.cn/client/chat/chatter/add_by_link?link_token=668q984b-1c18-4e78-8a65-eacb348e409d"
+     target="_blank"
+     class="feedback-float-btn">
+    <span class="feedback-float-btn-icon">💬</span>
+    <span class="feedback-float-btn-text">意见与交流群</span>
+  </a>
+
+</body>
+</html>
